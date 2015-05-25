@@ -84,7 +84,7 @@ multiplayer.prototype = {
 			this.spawnEnemy(this.diff.newPlayers[i])
 
 		for(i in this.diff.leftPlayers)
-			this.destryEnemy(this.diff.leftPlayers[i])
+			this.destroyEnemy(this.diff.leftPlayers[i])
 
 		for(i in this.diff.movements)
 			this.enemyMovement(i, this.diff.movements[i])
@@ -175,19 +175,19 @@ multiplayer.prototype = {
 		}
 	},
 	fireEnemyBullet: function(bullet){
-		console.log('New bullet !')
+		console.log(bullet)
 	},
 	spawnEnemy: function(enemy){
-		console.log('New enemy')
+		console.log("spawn : ", enemy)
 	},
-	destryEnemy: function(enemy){
-		console.log('left enemy')
+	destroyEnemy: function(enemy){
+		console.log("Kill: ", enemy)
 	},
 	enemyMovement: function(id, position){
-		console.log('enemy movement')
+		console.log(id, position)
 	},
 	getSpawn: function(){
-		return this.player_spawns[0]
+		return this.player_spawns[0];
 	},
 	collisionHandlerBulletLayer: function(bullet, layer) {
 		bullet.kill();
@@ -235,10 +235,6 @@ multiplayer.prototype = {
 		for(s in current.shots)
 			if(shotsids.indexOf(current.shots[s].id) == -1)
 				shots.push(s)
-
-		if(shots.length)
-			console.log("Shots: ", shots)
-
 
 		return {
 			newPlayers: newPlayers,
