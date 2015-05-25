@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+  <head>
+    <title>FTW</title>
+    <script type="text/javascript" src="js/pseudo_generator.js"></script>
+    <script type="text/javascript" src="js/jquery-1.11.2.min.js"></script>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="js/client.js"></script>
+
+  </head>
+  <body>
+
+  <button id="login">Login</button><br />
+  <button id="leave">Leave</button><br /><br />
+  
+  <button id="move">Move</button><br />
+  <button id="fire">Fire</button><br /><br />
+  
+
+  <div id="players">
+
+  </div>
+
+  <div id="chat">
+
+  </div>
+
+  <div id="gameWindow">
+
+  </div>
+	
+  <script>
+
+  var Client;
+
+  function create(){
+    var client = new Client(io);
+
+      $("#login").click(function(){
+        client.login(getName(5,7)));
+      });
+
+      $("#leave").click(function(){
+        client.leave();
+      });
+
+      $("#move").click(function(){
+        var position = {x : 0, y: 0};
+        position.x += 50
+        position.y += 50
+        client.move(position);
+      });
+
+      $("#fire").click(function(){
+        var position = {x : 50, y: 79};
+        var angle = 65;
+        var time = Date.now();
+
+        client.fire(position, angle, time);
+      });
+
+  }
+
+
+  $(function(){
+    create();
+	});
+  
+  </script>
+  </body>
+</html>

@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+	<head>
+
+    	<script src="/socket.io/socket.io.js"></script>
+		<script src="js/client.js"></script>
+
+    	<script src="js/pseudo_generator.js"></script>
+		<script src="underscore-min.js"></script>
+    	<script src="phaser.min.js"></script>
+    	<script src="src/boot.js"></script>
+    	<script src="src/menu.js"></script>
+    	<script src="src/options.js"></script>
+		<script src="src/next_level.js"></script>
+    	<script src="src/multiplayer.js"></script>
+		<script src="src/level_selection.js"></script>
+		<script src="src/level_generator.js"></script>
+		<script src="src/levels.js"></script>
+		<style>
+			body{margin:0}
+		</style>
+		<script>
+			//(function() {
+ 				size_x = Math.max(window.innerWidth,window.innerHeight)
+ 				size_y = Math.min(window.innerWidth,window.innerHeight)
+
+				var game = new Phaser.Game(size_x, size_y, Phaser.CANVAS, "game")
+
+				game.state.add("Boot",boot)
+				game.state.add("Menu",menu)
+				game.state.add("Options",options)
+				game.state.add("LevelSelection",levelSelection)
+				game.state.add("Multiplayer",multiplayer)
+				game.state.add("NextLevel", nextLevel)
+				
+				for(i in levels)
+					game.state.add("Level" + i, levels[i])
+
+				game.state.start("Boot")
+			//})();    
+		</script>
+    </head>
+    <body>
+    </body>
+</html>
