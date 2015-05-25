@@ -81,10 +81,10 @@ multiplayer.prototype = {
 			this.fireEnemyBullet(this.diff.shots[i])
 
 		for(i in this.diff.newPlayers)
-			this.spawnEnemy(this.diff.newPlayers[i])
+			this.spawnEnemy(i, this.diff.newPlayers[i])
 
 		for(i in this.diff.leftPlayers)
-			this.destroyEnemy(this.diff.leftPlayers[i])
+			this.destroyEnemy(i, this.diff.leftPlayers[i])
 
 		for(i in this.diff.movements)
 			this.enemyMovement(i, this.diff.movements[i])
@@ -170,18 +170,18 @@ multiplayer.prototype = {
 				bullet.rotation = this.game.physics.arcade.moveToPointer(bullet, 800, this.game.input.activePointer)
 				this.bulletTime = this.game.time.now + 1000/this.soldierFireFrequency;
 
-        		this.client.fire(position, bullet.rotation, Date.now());
+        		this.client.fire({ position: position, rotation: bullet.rotation, time: Date.now()});
 			}
 		}
 	},
 	fireEnemyBullet: function(bullet){
 		console.log(bullet)
 	},
-	spawnEnemy: function(enemy){
-		console.log("spawn : ", enemy)
+	spawnEnemy: function(id, enemy){
+		console.log("spawn : ", id, enemy)
 	},
-	destroyEnemy: function(enemy){
-		console.log("Kill: ", enemy)
+	destroyEnemy: function(id, enemy){
+		console.log("Kill: ", id , enemy)
 	},
 	enemyMovement: function(id, position){
 		console.log(id, position)
