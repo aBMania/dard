@@ -231,9 +231,6 @@ multiplayer.prototype = {
 			shotsids.push(previous.shots[s].id)
 
 
-		if(shotsids.length)
-			console.log("Shots IDs: ", shotsids)
-
 		shots = []
 		for(s in current.shots)
 			if(shotsids.indexOf(current.shots[s].id) == -1)
