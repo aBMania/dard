@@ -25,7 +25,10 @@ multiplayer.prototype = {
 		
 	},
   	create: function(){
+  		// Client qui nous permettra d'envoyer et recevoir les informations
 		this.client = new Client(io);
+		
+		// On se connecte avec un pseudo aléatoire
         this.client.login(getName(5,7));
 
 		this.game.time.advancedTiming = true;
@@ -38,7 +41,8 @@ multiplayer.prototype = {
 		this.layer = this.map.createLayer('Tile Layer 1');
 		this.layer.resizeWorld();
 
-		spawn = this.getSpawn
+		// Récupère un spawn (peut etre choisi parmi plusieurs pour éviter les spawn-kill)
+		spawn = this.getSpawn()
 
 		this.soldier = this.game.add.sprite(spawn.x, spawn.y, 'marine');
 		this.soldier.anchor.set(0.2, 0.5);
@@ -69,23 +73,48 @@ multiplayer.prototype = {
 		this.soldierSpeed = this.settings.player_base_speed
 		this.soldierFireFrequency = this.settings.bullet_base_frequency
 
-		this.gs = this.previous_gs = this.client.gameState
+		// Groupe phaser des enemis
+		this.enemyGroup = this.game.add.group();
+		
+		// Groupe phaser des tirs enemis
+		this.enemyBullet = this.game.add.group();
+		this.enemyBullet.enableBody = true;
+		this.enemyBullet.physicsBodyType = Phaser.Physics.ARCADE;
+		this.enemyBullet.setAll('anchor.x', 1);
+		this.enemyBullet.setAll('anchor.y', 0.5);
+		this.enemyBullet.setAll('outOfBoundsKill', true);
+		this.enemyBullet.setAll('checkWorldBounds', true);
+
+		// Tableau associatif qui contiendra les enemis
+		// La clé de chaque valeur est l'ID du joueur
+		this.enemies = {}
+		
+		// On initialise l'état du jeu (à null)
+		this.gs = this.previous_gs = this.client.gameState;
 	},
 	update: function(){
+		// Enregistre le dernier état du jeu
 		this.previous_gs = _.clone(this.gs)
-		this.gs = this.client.gameState
+		
+		// Récupère l'état du jeu courrant 
+		this.gs = this.client.gameState;
 
-		this.diff = this.computeDiff(this.previous_gs, this.gs)
+		// Calcul de la différence entre le dernier état de jeu et l'état courant
+		this.diff = this.computeDiff(this.previous_gs, this.gs);
 
+		// On affiche chaque nouveau tir
 		for(i in this.diff.shots)
 			this.fireEnemyBullet(this.diff.shots[i])
 
+		// On ajoute chaque nouveau joueur
 		for(i in this.diff.newPlayers)
 			this.spawnEnemy(i, this.diff.newPlayers[i])
-
+	
+		// On retire les enemis qui ont quitté
 		for(i in this.diff.leftPlayers)
 			this.destroyEnemy(i, this.diff.leftPlayers[i])
-
+		
+		// On fait bouger les enemis
 		for(i in this.diff.movements)
 			this.enemyMovement(i, this.diff.movements[i])
 
@@ -146,12 +175,16 @@ multiplayer.prototype = {
 			this.mouseisDown = false;
 		}
 
-		if(this.isMoving)
-			this.client.move({x: this.soldier.x, y: this.soldier.y});
+
+		this.client.move({x: this.soldier.x, y: this.soldier.y, rotation: this.soldier.rotation});
 
 		this.soldier.rotation = this.game.physics.arcade.angleToPointer(this.soldier);
 		this.game.physics.arcade.collide(this.soldier, this.layer);
 		this.game.physics.arcade.collide(this.bullets, this.layer, this.collisionHandlerBulletLayer, null, this);
+		this.game.physics.arcade.collide(this.enemyBullet, this.layer, this.collisionHandlerBulletLayer, null, this);
+		this.game.physics.arcade.collide(this.enemyBullet, this.soldier, this.killed, null, this);
+		
+		this.game.physics.arcade.collide(this.bullets, this.enemyGroup, this.collisionHandlerBulletLayer, null, this);
 		
 	},
 	fireBullet: function() {
@@ -169,25 +202,75 @@ multiplayer.prototype = {
 				bullet.reset(position.x, position.y);
 				bullet.rotation = this.game.physics.arcade.moveToPointer(bullet, 800, this.game.input.activePointer)
 				this.bulletTime = this.game.time.now + 1000/this.soldierFireFrequency;
-
+				
+				// Envoie le tir au serveur
         		this.client.fire({ position: position, rotation: bullet.rotation, time: Date.now()});
 			}
 		}
 	},
 	fireEnemyBullet: function(bullet){
-		console.log(bullet)
+		/* Tir d'enemi
+
+			bullet : {
+				id: ... (ID unique du tir)
+				playerId: ... (ID unique du joueur)
+				data: {
+					position: {x: ... , y: ...}
+					rotation: ...
+					time: ... (Date.now())
+				}
+			}
+		*/
+		
+		b = this.enemyBullet.create(bullet.data.position.x, bullet.data.position.y, 'gunProjectile', 0);
+		
+		this.game.physics.arcade.enableBody(b);
+        b.enableBody = true;
+		b.rotation = bullet.data.rotation
+		b.body.velocity.x = 800*Math.cos(b.rotation)
+		b.body.velocity.y = 800*Math.sin(b.rotation)
+		b.playerId = bullet.playerId
 	},
 	spawnEnemy: function(id, enemy){
-		console.log("spawn : ", id, enemy)
+		this.enemies[id] = this.enemyGroup.create(0, 0, 'marine', 0);
+		
+		this.enemies[id].anchor.set(0.2, 0.5);
+		this.enemies[id].scale.setTo(2, 2);
+		this.game.physics.enable(this.enemies[id], Phaser.Physics.ARCADE);
+		this.enemies[id].body.allowRotation = false;
+		this.enemies[id].body.fixedRotation = true;
+
+		this.enemies[id].animations.add('walk', [0,1,2,3]);
+		this.enemies[id].animations.add('fire', [4,0]);
+		this.enemies[id].animations.add('fireWalk');
+		this.enemies[id].body.width /= 2;
+		this.enemies[id].body.offset.setTo(-15, 0);
+		this.enemies[id].immovable = true;
+		
+		if(enemy.position){
+			this.enemies[id].x = enemy.position.x;
+			this.enemies[id].y = enemy.position.y;
+			this.enemies[id].rotation = enemy.position.rotation;
+		}
 	},
 	destroyEnemy: function(id, enemy){
-		console.log("Kill: ", id , enemy)
+		this.enemies[id].kill();
+		console.log("Kill: ", id , enemy);
 	},
 	enemyMovement: function(id, position){
-		console.log(id, position)
+		this.enemies[id].x = position.x;
+		this.enemies[id].y = position.y;
+		this.enemies[id].rotation = position.rotation;
 	},
 	getSpawn: function(){
-		return this.player_spawns[0];
+		return this.settings.player_spawns[0];
+	},
+	killed: function(soldier, bullet){
+		console.log(bullet.playerId)
+		bullet.kill();
+		spawn = this.getSpawn()
+		soldier.x = spawn.x
+		soldier.y = spawn.y
 	},
 	collisionHandlerBulletLayer: function(bullet, layer) {
 		bullet.kill();
@@ -199,7 +282,7 @@ multiplayer.prototype = {
 				leftPlayers: {},
 				shots: {},
 				movements: {}
-			}
+			};
 
 		if(previous == null)
 			return {
@@ -209,17 +292,19 @@ multiplayer.prototype = {
 				movements: {}
 			}
 
-		var newPlayers = {}
-		var leftPlayers = {}
-		var movements = {}
+		var newPlayers = {};
+		var leftPlayers = {};
+		var movements = {};
 
 		for(p in current.players)
 			if(!previous.players[p])
 				newPlayers[p] = current.players[p]
 			else
 				if(current.players[p].position && previous.players[p].position)
-					if(current.players[p].position.x != previous.players[p].position.x || current.players[p].position.y != previous.players[p].position.y)
-						movements[p] = current.players[p].position
+					if(current.players[p].position.x != previous.players[p].position.x 
+						|| current.players[p].position.y != previous.players[p].position.y
+						|| current.players[p].rotation != previous.players[p].position.y)
+							movements[p] = current.players[p].position
 
 		for(p in previous.players)
 			if(!current.players[p])

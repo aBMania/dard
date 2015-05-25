@@ -187,8 +187,7 @@ var Level = function(n, user_settings){
 					this.score += 250;
 				}
 
-				score = this.score;
-				game.state.start('NextLevel', true, false, score, n);
+				game.state.start('NextLevel', true, false, this.score, n);
 			}
 		},
 		render: function() {
