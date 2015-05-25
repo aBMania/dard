@@ -105,9 +105,9 @@ function mainLoop (){
     /*
     ii = ii%100
     if(ii == 0)
-        console.log(gs)
+        console.log(gs.shots)
     ii++
-*/
+    */
     for(socket in io.sockets.connected)
     {
         var players_without_self = _.omit(gs.players, socket)

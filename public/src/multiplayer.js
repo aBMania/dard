@@ -230,10 +230,18 @@ multiplayer.prototype = {
 		for(s in previous.shots)
 			shotsids.push(s.shotId)
 
+
+		if(shotsids.length)
+			console.log("Shots IDs: ", shotsids)
+
 		shots = []
 		for(s in current.shots)
-			if(shotsids.indexOf(s.shotId) == -1)
+			if(shotsids.indexOf(s.id) == -1)
 				shots.push(s)
+
+		if(shots.length)
+			console.log("Shots: ", shots)
+
 
 		return {
 			newPlayers: newPlayers,

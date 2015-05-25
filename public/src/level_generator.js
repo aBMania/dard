@@ -19,7 +19,6 @@ var Level = function(n, user_settings){
 
 	_.extend(settings, user_settings)
 
-	console.log('level generated with options : ', settings)
 
 	var level = function(game){
 		this.bulletTime = 0
