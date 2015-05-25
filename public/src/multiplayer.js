@@ -236,7 +236,7 @@ multiplayer.prototype = {
 
 		shots = []
 		for(s in current.shots)
-			if(shotsids.indexOf(s.id) == -1)
+			if(shotsids.indexOf(current.shots[s].id) == -1)
 				shots.push(s)
 
 		if(shots.length)
