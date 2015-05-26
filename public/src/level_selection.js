@@ -89,9 +89,7 @@ levelSelection.prototype = {
 	goToLevel: function(i){
 		
 		this.game.sound.stopAll();
-
-		game_music = this.game.add.audio('game_music');
-		game_music.play();
+		this.game.sound.play('game_music');
 
 		this.game.state.start("Level" + i);
 	}

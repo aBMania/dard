@@ -4,9 +4,9 @@ var boot = function(game){
   
 boot.prototype = {
 	preload: function(){
-        this.game.load.audio('menu_music', 'assets/audio/menu.mp3')
-		this.game.load.audio('game_music', 'assets/audio/game.mp3');
-		this.game.load.audio('win_music', 'assets/audio/win.mp3');
+        this.game.load.audio('menu_music', 'assets/audio/menu.mp3', 1, true)
+		this.game.load.audio('game_music', 'assets/audio/game.mp3', 1, true);
+		this.game.load.audio('win_music', 'assets/audio/win.mp3', 1, true);
         this.game.load.spritesheet('continue', 'assets/images/buttons/continue.png', 180, 50)
         this.game.load.image('fond', 'assets/images/fond.png');
         this.game.load.image('title1', 'assets/images/die.png');

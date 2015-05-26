@@ -130,4 +130,4 @@ function mainLoop (){
     
 }
 
-setInterval(mainLoop, 10);
+setInterval(mainLoop, 50);

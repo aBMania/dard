@@ -27,6 +27,8 @@ menu.prototype = {
 		this.game.state.start("LevelSelection");
 	},
 	onMultiplayer: function(){
+		this.game.sound.stopAll();
+		this.game.sound.play('game_music');
 		this.game.state.start("Multiplayer");
 	},
 	onOptions: function(){

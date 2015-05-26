@@ -1,6 +1,6 @@
 var Level = function(n, user_settings){
 
-	var settings = {
+	settings = {
 		tilemap: 'assets/maps/level0.json',
 		tilemap_sprite: 'assets/sprites/level0.png',
 
@@ -25,15 +25,15 @@ var Level = function(n, user_settings){
 		this.isMoving = false
 		this.mouseisDown = false
 		this.isAlive = true
+		this.settings = settings
 	};
 
 	level.prototype = {
-		
 		preload: function(){
 			this.game.load.spritesheet('marine', 'assets/sprites/Soldier_Walk_Fire.png', 47, 23);
 			this.game.load.spritesheet('alien', 'assets/sprites/Alien_Walk2.png', 70, 58);
-			this.game.load.tilemap('map', settings.tilemap, null, Phaser.Tilemap.TILED_JSON);
-			this.game.load.image('ground_1x1', settings.tilemap_sprite);
+			this.game.load.tilemap('map', this.settings.tilemap, null, Phaser.Tilemap.TILED_JSON);
+			this.game.load.image('ground_1x1', this.settings.tilemap_sprite);
 			this.game.load.image('gunProjectile', 'assets/sprites/gun_projectile.png');
 		},
 	  	create: function(){
@@ -43,12 +43,17 @@ var Level = function(n, user_settings){
 
 			this.map = this.game.add.tilemap('map');
 			this.map.addTilesetImage('ground_1x1');
-			this.map.setCollisionBetween(settings.collisions.min, settings.collisions.max);
+			this.map.setCollisionBetween(this.settings.collisions.min, this.settings.collisions.max);
+			
+			var walkables = _.union(_.range(this.settings.collisions.min-1), _.range(2000,9000))
 
+    		this.pathfinder = this.game.plugins.add(Phaser.Plugin.PathFinderPlugin);
+    		this.pathfinder.setGrid(this.map.layers[0].data, walkables);
+			
 			this.layer = this.map.createLayer('Tile Layer 1');
 			this.layer.resizeWorld();
 
-			this.soldier = this.game.add.sprite(settings.player_spawn.x, settings.player_spawn.y, 'marine');
+			this.soldier = this.game.add.sprite(this.settings.player_spawn.x, this.settings.player_spawn.y, 'marine');
 			this.soldier.anchor.set(0.2, 0.5);
 			this.soldier.scale.setTo(2, 2);
 			this.game.physics.enable(this.soldier, Phaser.Physics.ARCADE);
@@ -73,8 +78,8 @@ var Level = function(n, user_settings){
 
 			this.aliens = this.game.add.group();
 			this.aliensNb = 0; // Nombre d'aliens présents au début
-			for(i in settings.aliens){
-			    this.SpawnAlien(this.aliens, settings.aliens[i].x, settings.aliens[i].y);
+			for(i in this.settings.aliens){
+			    this.SpawnAlien(this.aliens, this.settings.aliens[i].x, this.settings.aliens[i].y);
 			    this.aliensNb += 1;
 			}
 
@@ -91,17 +96,18 @@ var Level = function(n, user_settings){
 		    	alien.body.allowRotation = false;
 				alien.body.fixedRotation = true;
 				alien.body.immovable = true;
-				alien.body.width -= 50;
-				alien.body.height -= 50;
-				alien.body.offset.setTo(-5, 0);
+				alien.body.width /= 4;
+				alien.body.height /= 4;
 			});
 
 			this.soldier.bringToTop();
-			this.aggro_range = settings.aggro_range;
+			this.aggro_range = this.settings.aggro_range;
 			this.score = 0; // Initialisation du score
 		},
 		update: function(){
-			this.aggro_range += this.game.time.totalElapsedSeconds()/settings.aggro_ratio;
+			//console.log("{x:" + this.soldier.x + ",  y:" + this.soldier.x + "},")
+			
+			this.aggro_range += this.game.time.totalElapsedSeconds()/this.settings.aggro_ratio;
 			aggro_range_tmp = this.aggro_range;
 
 			this.soldier.body.velocity.x = 0;
@@ -111,14 +117,14 @@ var Level = function(n, user_settings){
 			this.game.physics.arcade.collide(this.bullets, this.aliens, this.collisionHandler, null, this);
 			if (this.game.input.keyboard.addKey(Phaser.Keyboard.Q).isDown)
 			{
-				this.soldier.body.velocity.x = -settings.player_speed;
+				this.soldier.body.velocity.x = -this.settings.player_speed;
 				if (!this.mouseisDown)
 					this.soldier.animations.play('walk', 6, false);
 				this.isMoving = true;
 			}
 			else if (this.game.input.keyboard.addKey(Phaser.Keyboard.D).isDown)
 			{
-				this.soldier.body.velocity.x = settings.player_speed;
+				this.soldier.body.velocity.x = this.settings.player_speed;
 				if (!this.mouseisDown)
 					this.soldier.animations.play('walk', 6, false);
 				this.isMoving = true;
@@ -126,14 +132,14 @@ var Level = function(n, user_settings){
 
 			if (this.game.input.keyboard.addKey(Phaser.Keyboard.Z).isDown)
 			{
-				this.soldier.body.velocity.y = -settings.player_speed;
+				this.soldier.body.velocity.y = -this.settings.player_speed;
 				if (!this.mouseisDown)
 					this.soldier.animations.play('walk', 6, false);
 				this.isMoving = true;
 			}
 			else if (this.game.input.keyboard.addKey(Phaser.Keyboard.S).isDown)
 			{
-				this.soldier.body.velocity.y = settings.player_speed;
+				this.soldier.body.velocity.y = this.settings.player_speed;
 				if (!this.mouseisDown)
 					this.soldier.animations.play('walk', 6, false);
 				this.isMoving = true;
@@ -169,8 +175,15 @@ var Level = function(n, user_settings){
 			
 			var self = this;
 			this.aliens.children.forEach(function(alien){
-				if (this.game.physics.arcade.distanceBetween(alien, self.soldier) <= aggro_range_tmp ) {
-					self.AlienFollow(alien);
+				if (alien.alive && this.game.physics.arcade.distanceBetween(alien, self.soldier) <= aggro_range_tmp ) {
+					if(!alien.focus)
+						self.setAlienFocus(alien)
+					else
+						self.moveAlienToXY(alien, alien.focus.x, alien.focus.y)
+						//if(this.game.physics.arcade.distanceToXY(alien, alien.focus.x, alien.focus.y) < 10)
+						self.setAlienFocus(alien)
+						
+					
 				}
 			});
 
@@ -201,7 +214,7 @@ var Level = function(n, user_settings){
 				{
 					bullet.reset(this.soldier.x+Math.cos(this.soldier.rotation)*30, this.soldier.y+Math.sin(this.soldier.rotation)*30);
 					bullet.rotation = this.game.physics.arcade.moveToPointer(bullet, 800, this.game.input.activePointer);
-					this.bulletTime = this.game.time.now + 1000/settings.bullet_frequency;
+					this.bulletTime = this.game.time.now + 1000/this.settings.bullet_frequency;
 					this.score -= 5;
 				}
 			}
@@ -221,21 +234,54 @@ var Level = function(n, user_settings){
 		},
 
 		SpawnAlien: function(aliens, posX, posY) {
-			return aliens.create(posX, posY, 'alien', 0);
+			alien = aliens.create(posX, posY, 'alien', 0);
+			alien.alive = true
+			this.game.debug.body(alien)
+			return alien
 		},
 
 		AlienFollow: function(alien) {
-			this.game.physics.arcade.moveToObject(alien, this.soldier, settings.alien_speed);
-			if (alien.body.enable == true)
-				alien.rotation = this.game.physics.arcade.moveToObject(alien, this.soldier, settings.alien_speed);
+			alien.rotation = this.game.physics.arcade.moveToObject(alien, this.soldier, this.settings.alien_speed);
 		},
 
 		AlienDie: function(bullet, alien) {
+			alien.alive = false;
 			alien.animations.play('die');
 			alien.body.enable = false;
 			bullet.kill();
 			this.aliensCount -= 1;
 			this.score += 66;
+		},
+		setAlienFocus: function(alien) {
+			var self = this
+			
+		    this.pathfinder.setCallbackFunction(function(path) {
+			        path = path || []
+			        if(path.length < 3)
+			        	alien.focus = { x: self.soldier.x, y: self.soldier.y }
+			        else{
+			        	after_tile = self.map.getTile(path[2].x, path[2].y)
+			        	
+			        	x = (after_tile.worldX + 16)
+			        	y = (after_tile.worldY + 16)
+			        	
+			        	alien.focus = { x: x, y: y }
+			        }
+			       	
+			});
+			
+			fromTile = this.map.getTileWorldXY(alien.x,alien.y)
+			toTile = this.map.getTileWorldXY(this.soldier.x,this.soldier.y)
+			
+		    this.pathfinder.preparePathCalculation([fromTile.x,fromTile.y], [toTile.x,toTile.y]);
+		    this.pathfinder.calculatePath()
+		},
+		moveAlienToSoldier: function(alien){
+			alien.rotation = this.game.physics.arcade.moveToObject(alien, this.soldier, this.settings.alien_speed);
+		},
+		moveAlienToXY: function(alien, x, y){
+			alien.rotation = this.game.physics.arcade.moveToXY(alien, x, y, this.settings.alien_speed);
+			console.log("Alien from " + alien.x + ", " + alien.y + " to " + x + ", " + y)
 		}
 	};
 
