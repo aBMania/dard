@@ -10,7 +10,7 @@ function getName(minlength, maxlength, prefix, suffix)
 	//these weird character sets are intended to cope with the nature of English (e.g. char 'x' pops up less frequently than char 's')
 	//note: 'h' appears as consonants and vocals
 	var vocals = 'aeiouyh' + 'aeiou' + 'aeiou';
-	var cons = 'bcdfghjklmnpqrstvwxz' + 'bcdfgjklmnprstvw' + 'bcdfgjklmnprst';
+	var cons = 'bcdfghjklmnpqrstvwxz' + 'bcdfjlmnprst' + 'bcdfgjklmnprst';
 	var allchars = vocals + cons;
 	//minlength += prefix.length;
 	//maxlength -= suffix.length;

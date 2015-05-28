@@ -8,6 +8,11 @@ module.exports = GameState = function(user){
 	this.shotId = 0;
 }
 
+GameState.prototype.getPlayerPseudo = function(id){
+	if(this.players[id])
+		return this.players[id].pseudo
+};
+
 GameState.prototype.getGameState = function(){
 	return {
 		players: this.players,
@@ -36,8 +41,8 @@ GameState.prototype.playerMove = function(id, data){
 }
 
 GameState.prototype.die = function(deadId, killerId){
-	dead = this.players[deadId]
-	killer = this.players[killerId]
+	var dead = this.players[deadId]
+	var killer = this.players[killerId]
 	
 	if(!dead){
 		console.error('un joueur inconnu meurt, étrange...');

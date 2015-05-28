@@ -31,7 +31,7 @@ io.on('connection', function(socket){
         logged_in = true;
         socket.pseudo = pseudo;
         gameState.addPlayer(socket.id, pseudo);
-
+        io.emit('log', gameState.getPlayerPseudo(socket.id) + " joined the game.");
         console.log(pseudo + " logged in (ID: " + socket.id + ")")
     });
 
@@ -41,7 +41,7 @@ io.on('connection', function(socket){
             console.log('Anonymous try to logout');
             return;
         }
-        
+        io.emit('log', gameState.getPlayerPseudo(socket.id) + " left the game.");
         console.log(socket.pseudo + " left")
 
         gameState.removePlayer(socket.id);
@@ -87,11 +87,12 @@ io.on('connection', function(socket){
         }
 
         //console.log(socket.pseudo + " died")
-
-        gameState.die(socker.id, id)
+        io.emit('log', gameState.getPlayerPseudo(socket.id) + " killed " + gameState.getPlayerPseudo(id) + ".");
+        gameState.die(socket.id, id)
     });
 
     socket.on('disconnect', function(){
+        io.emit('log', gameState.getPlayerPseudo(socket.id) + " left the game.");
         gameState.removePlayer(socket.id);
         logged_in = false;
         console.log('disconnection');
@@ -130,4 +131,4 @@ function mainLoop (){
     
 }
 
-setInterval(mainLoop, 50);
+setInterval(mainLoop, 40);  

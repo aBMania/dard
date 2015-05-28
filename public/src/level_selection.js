@@ -17,20 +17,20 @@ levelSelection.prototype = {
 		title2.anchor.set(0.5,0.5)
 		title3.anchor.set(0.5,0.5)
 		
-	    var n = 6;
+	    var n = 4;
 
 	    // set a fill and line style
 
 	    var block_color = 0xFFFFFF;
-	    var block_per_row = 2;
+	    var block_per_row = 1;
 
-	    var block_height = 60;
-	    var block_width = this.game.world.width*0.3;
+	    var block_height = this.game.world.height*0.08;
+	    var block_width = this.game.world.width*0.4;
 	    var block_spacing_horizontal = 10;
 	    var block_spacing_vertical = 20;
 
 	    var block_left_margin = this.game.world.centerX - block_width*block_per_row/2;
-	    var block_top_margin = 350
+	    var block_top_margin = this.game.height*0.5
 	    var block_radius = 10;
 
 	    var text_style = { font: "32px Arial", fill: "#000000", wordWrap: true, wordWrapWidth: block_width, align: "center" }
@@ -60,7 +60,12 @@ levelSelection.prototype = {
 
 		    if(this.game.state.states["Level" + i])
 		    	if(localStorage.getItem("level" + i) || i == 0)
-		    		text = this.game.add.text(text_x, text_y, "Level " + (i+1), text_style)
+		    	{
+		    		text = "Level " + (i+1)
+		    		if (localStorage.getItem("level" + i))
+		    			text += " (Score: " + localStorage.getItem("level" + i) + ")"
+		    		text = this.game.add.text(text_x, text_y, text, text_style)
+		    	}
 		    	else
    					text = this.game.add.text(text_x, text_y, "Locked", text_style_no_level)
    			else

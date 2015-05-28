@@ -11,21 +11,21 @@ var Level = function(n, user_settings){
 		collisions: {min:8, max:2500},
 
 		aliens: [{x:146,  y:2015}, {x:249,  y:2297}, {x:760,  y:2030}, {x:488,  y:1765}, {x:773,  y:1695}, {x:356,  y:1430}, {x:831,  y:1331}, {x:715,  y:871}, {x:290,  y:1033}, {x:990,  y:987}, {x:1233,  y:1121}, {x:1368,  y:829}, {x:834,  y:651}, {x:1781,  y:740}, {x:1756,  y:1132}, , {x:1752,  y:448}, {x:1352,  y:438}, {x:1088,  y:229}, {x:439,  y:522}, {x:432,  y:355}, {x:42,  y:291}, {x:480,  y:47}, {x:268,  y:739}, {x:866,  y:77}, {x:581,  y:287}, {x:1164,  y:379}, {x:1284,  y:1236}, {x:484,  y:1575}],
-		alien_speed: 300,
+		alien_speed: 250,
 
 		aggro_range: 250,
 		aggro_ratio: 900
-	}
-
-	_.extend(settings, user_settings)
-
+	};
+	// Paramètres par défaut d'un niveau pouvant être modifiés. Le niveau 1 a ces paramètres.
+	
 
 	var level = function(game){
-		this.bulletTime = 0
-		this.isMoving = false
-		this.mouseisDown = false
-		this.isAlive = true
-		this.settings = settings
+		this.bulletTime = 0;
+		this.isMoving = false;
+		this.mouseisDown = false;
+		this.isAlive = true;
+		this.settings = _.clone(settings)
+		_.extend(this.settings, user_settings)
 	};
 
 	level.prototype = {
@@ -35,38 +35,44 @@ var Level = function(n, user_settings){
 			this.game.load.tilemap('map', this.settings.tilemap, null, Phaser.Tilemap.TILED_JSON);
 			this.game.load.image('ground_1x1', this.settings.tilemap_sprite);
 			this.game.load.image('gunProjectile', 'assets/sprites/gun_projectile.png');
+			// Préchargement des feuilles de sprites et des maps
 		},
 	  	create: function(){
 
 			this.game.time.advancedTiming = true;
 			this.game.physics.startSystem(Phaser.Physics.ARCADE);
-
+			// Démarre la physique Arcade du jeu 
 			this.map = this.game.add.tilemap('map');
 			this.map.addTilesetImage('ground_1x1');
 			this.map.setCollisionBetween(this.settings.collisions.min, this.settings.collisions.max);
+			// Active les collisions
 			
 			var walkables = _.union(_.range(this.settings.collisions.min-1), _.range(2000,9000))
 
     		this.pathfinder = this.game.plugins.add(Phaser.Plugin.PathFinderPlugin);
     		this.pathfinder.setGrid(this.map.layers[0].data, walkables);
+			// Mise en place du pathfinding
 			
 			this.layer = this.map.createLayer('Tile Layer 1');
 			this.layer.resizeWorld();
-
+			// Permet d'adapter la caméra à la map
+			
 			this.soldier = this.game.add.sprite(this.settings.player_spawn.x, this.settings.player_spawn.y, 'marine');
 			this.soldier.anchor.set(0.2, 0.5);
 			this.soldier.scale.setTo(2, 2);
 			this.game.physics.enable(this.soldier, Phaser.Physics.ARCADE);
 			this.soldier.body.allowRotation = false;
 			this.soldier.body.fixedRotation = true;
-
+			// Ajout du sprite du soldat en jeu
+			
 			this.soldier.animations.add('walk', [0,1,2,3]);
 			this.soldier.animations.add('fire', [4,0]);
 			this.soldier.animations.add('fireWalk');
 			this.soldier.body.width /= 2;
 			this.soldier.body.offset.setTo(-15, 0);
 			this.game.camera.follow(this.soldier);
-
+			// Mise en place des animations du soldat et ordonne à la caméra de le suivre
+			
 			this.bullets = this.game.add.group();
 			this.bullets.enableBody = true;
 			this.bullets.physicsBodyType = Phaser.Physics.ARCADE;
@@ -75,7 +81,8 @@ var Level = function(n, user_settings){
 			this.bullets.setAll('anchor.y', 0.5);
 			this.bullets.setAll('outOfBoundsKill', true);
 			this.bullets.setAll('checkWorldBounds', true);
-
+			// Mise en place des projectiles
+			
 			this.aliens = this.game.add.group();
 			this.aliensNb = 0; // Nombre d'aliens présents au début
 			for(i in this.settings.aliens){
@@ -99,8 +106,9 @@ var Level = function(n, user_settings){
 				alien.body.width /= 4;
 				alien.body.height /= 4;
 			});
-
-			this.soldier.bringToTop();
+			// Ajout d'un groupe d'aliens en jeu
+			
+			this.soldier.bringToTop(); // Régle le z-order
 			this.aggro_range = this.settings.aggro_range;
 			this.score = 0; // Initialisation du score
 		},
@@ -108,13 +116,16 @@ var Level = function(n, user_settings){
 			//console.log("{x:" + this.soldier.x + ",  y:" + this.soldier.x + "},")
 			
 			this.aggro_range += this.game.time.totalElapsedSeconds()/this.settings.aggro_ratio;
-			aggro_range_tmp = this.aggro_range;
-
+			var aggro_range_tmp = this.aggro_range;
+			// Champ d'aggression mis en place
+			
 			this.soldier.body.velocity.x = 0;
 			this.soldier.body.velocity.y = 0;
 			this.soldier.body.angularVelocity = 0;
 			this.game.physics.arcade.collide(this.soldier, this.aliens, this.collisionStoA, null, this);
 			this.game.physics.arcade.collide(this.bullets, this.aliens, this.collisionHandler, null, this);
+			// Ajout des collisions entre les projectiles et les aliens puis entre le soldat et les aliens
+			
 			if (this.game.input.keyboard.addKey(Phaser.Keyboard.Q).isDown)
 			{
 				this.soldier.body.velocity.x = -this.settings.player_speed;
@@ -152,7 +163,8 @@ var Level = function(n, user_settings){
 
 				this.isMoving = false;
 			}
-
+			// Gére les déplacements clavier avec z,q,s et d
+			
 			if (this.game.input.mousePointer.isDown && this.isAlive)
 			{
 				this.mouseisDown = true;
@@ -167,7 +179,8 @@ var Level = function(n, user_settings){
 			} else {
 				this.mouseisDown = false;
 			}
-
+			// Gére le viseur avec la souris
+			
 			this.soldier.rotation = this.game.physics.arcade.angleToPointer(this.soldier);
 			this.game.physics.arcade.collide(this.soldier, this.layer);
 			this.game.physics.arcade.collide(this.aliens, this.layer);
@@ -177,20 +190,19 @@ var Level = function(n, user_settings){
 			this.aliens.children.forEach(function(alien){
 				if (alien.alive && this.game.physics.arcade.distanceBetween(alien, self.soldier) <= aggro_range_tmp ) {
 					if(!alien.focus)
-						self.setAlienFocus(alien)
+						self.setAlienFocus(alien);
 					else
-						self.moveAlienToXY(alien, alien.focus.x, alien.focus.y)
+						self.moveAlienToXY(alien, alien.focus.x, alien.focus.y);
 						//if(this.game.physics.arcade.distanceToXY(alien, alien.focus.x, alien.focus.y) < 10)
-						self.setAlienFocus(alien)
-						
-					
+						self.setAlienFocus(alien);
 				}
 			});
 
 			if(this.score <= 0) {
 				this.score = 0;
 			}
-
+			// Evite un score négatif
+			
 			if (this.aliensCount <= 0) {
 				if(this.aggro_range <= 600) {
 					this.score += 1000;
@@ -199,9 +211,10 @@ var Level = function(n, user_settings){
 				} else if (this.aggro_range <= 1000) {
 					this.score += 250;
 				}
-
-				game.state.start('NextLevel', true, false, this.score, n);
+			
+				game.state.start('NextLevel', true, false, this.score, n); // On passe au niveau suivant
 			}
+			// Bonus de points en fin de partie
 		},
 		render: function() {
 			this.game.debug.text("FPS : " + this.game.time.fps, 0, 20, 'rgba(255,0,0,1)');
@@ -214,8 +227,8 @@ var Level = function(n, user_settings){
 				{
 					bullet.reset(this.soldier.x+Math.cos(this.soldier.rotation)*30, this.soldier.y+Math.sin(this.soldier.rotation)*30);
 					bullet.rotation = this.game.physics.arcade.moveToPointer(bullet, 800, this.game.input.activePointer);
-					this.bulletTime = this.game.time.now + 1000/this.settings.bullet_frequency;
-					this.score -= 5;
+					this.bulletTime = this.game.time.now + 1000/this.settings.bullet_frequency; // Gestion vitesse tirs
+					this.score -= 5; // Pénalité par tir effectué
 				}
 			}
 		},
@@ -230,14 +243,15 @@ var Level = function(n, user_settings){
 		collisionStoA: function(soldier, alien) {
 			soldier.kill();
 			isAlive = false;
-			this.game.state.restart()
+			this.game.state.restart();
 		},
-
+		// Gestion des collisions
+		
 		SpawnAlien: function(aliens, posX, posY) {
 			alien = aliens.create(posX, posY, 'alien', 0);
-			alien.alive = true
-			this.game.debug.body(alien)
-			return alien
+			alien.alive = true;
+			this.game.debug.body(alien);
+			return alien;
 		},
 
 		AlienFollow: function(alien) {
@@ -251,6 +265,7 @@ var Level = function(n, user_settings){
 			bullet.kill();
 			this.aliensCount -= 1;
 			this.score += 66;
+			// Gestion de la mort de l'IA avec implémentation du score
 		},
 		setAlienFocus: function(alien) {
 			var self = this
@@ -274,16 +289,16 @@ var Level = function(n, user_settings){
 			toTile = this.map.getTileWorldXY(this.soldier.x,this.soldier.y)
 			
 		    this.pathfinder.preparePathCalculation([fromTile.x,fromTile.y], [toTile.x,toTile.y]);
-		    this.pathfinder.calculatePath()
+		    this.pathfinder.calculatePath();
+		    // Gére le pathfinding de l'IA
 		},
 		moveAlienToSoldier: function(alien){
 			alien.rotation = this.game.physics.arcade.moveToObject(alien, this.soldier, this.settings.alien_speed);
 		},
 		moveAlienToXY: function(alien, x, y){
 			alien.rotation = this.game.physics.arcade.moveToXY(alien, x, y, this.settings.alien_speed);
-			console.log("Alien from " + alien.x + ", " + alien.y + " to " + x + ", " + y)
 		}
 	};
 
 	return level;
-}
+};

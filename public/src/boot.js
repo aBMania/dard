@@ -7,7 +7,7 @@ boot.prototype = {
         this.game.load.audio('menu_music', 'assets/audio/menu.mp3', 1, true)
 		this.game.load.audio('game_music', 'assets/audio/game.mp3', 1, true);
 		this.game.load.audio('win_music', 'assets/audio/win.mp3', 1, true);
-        this.game.load.spritesheet('continue', 'assets/images/buttons/continue.png', 180, 50)
+        this.game.load.spritesheet('continue', 'assets/images/buttons/continue.png', 224, 54)
         this.game.load.image('fond', 'assets/images/fond.png');
         this.game.load.image('title1', 'assets/images/die.png');
         this.game.load.image('title2', 'assets/images/and.png');
@@ -26,7 +26,18 @@ boot.prototype = {
 		title1 = this.game.add.sprite(1.5*this.game.world.width, this.game.world.centerY, 'title1')
 		title2 = this.game.add.sprite(1.5*this.game.world.width, this.game.world.centerY, 'title2')
 		title3 = this.game.add.sprite(1.5*this.game.world.width, this.game.world.centerY, 'title3')
-
+		
+		if(title1.height > this.game.height && title1.width > this.game.width)
+		{
+			title1.height = this.game.height;
+	    	title1.width  = this.game.width;
+			title2.height = this.game.height;
+	    	title2.width  = this.game.width;
+			title3.height = this.game.height;
+	    	title3.width  = this.game.width;
+			fond.height = this.game.height;
+	    	fond.width  = this.game.width;
+		}
 		title1.anchor.set(0.5,0.5)
 		title2.anchor.set(0.5,0.5)
 		title3.anchor.set(0.5,0.5)
@@ -40,7 +51,7 @@ boot.prototype = {
 
 
 	    var text_style = { font: "32px Arial", fill: "#000000", align: "center" }
-   		this.loading = this.game.add.text(this.game.world.centerX, 450, "Loading...", text_style)
+   		this.loading = this.game.add.text(this.game.world.centerX, this.game.world.height*0.6, "Loading...", text_style)
     	this.loading.anchor.set(0.5)
 
 		music = this.game.add.audio('menu_music')
@@ -48,7 +59,8 @@ boot.prototype = {
 	},
 	printContinue: function(){
 		this.game.world.remove(this.loading)
-		b_continue = this.game.add.button(this.game.world.centerX - 180/2, 450, 'continue', this.onContinue, this, 1, 0)
+		button_width = 224
+		b_continue = this.game.add.button(this.game.world.centerX - button_width/2, this.game.world.height*0.6, 'continue', this.onContinue, this, 1, 0)
 	},
 	onContinue: function(){
 		this.scale.startFullScreen()

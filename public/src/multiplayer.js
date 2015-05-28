@@ -4,9 +4,10 @@ var multiplayer = function(game){
 		tilemap_sprite: 'assets/sprites/level0.png',
 
 		bullet_base_frequency: 5,
-
+	
+		bullet_speed: 800,
 		player_base_speed: 300,
-		player_spawns: [{x: 520, y: 2300}],
+		player_spawns: [{x: 520, y: 2300}, {x :68, y:295}, {x :744, y:158}, {x :1744, y:410}, {x :1796, y:1150}, {x :244, y:1204}],
 		collisions: {min:8, max:2500},
 
 	}	
@@ -42,7 +43,7 @@ multiplayer.prototype = {
 		this.layer.resizeWorld();
 
 		// Récupère un spawn (peut etre choisi parmi plusieurs pour éviter les spawn-kill)
-		spawn = this.getSpawn()
+		var spawn = this.getSpawn()
 
 		this.soldier = this.game.add.sprite(spawn.x, spawn.y, 'marine');
 		this.soldier.anchor.set(0.2, 0.5);
@@ -85,9 +86,24 @@ multiplayer.prototype = {
 		this.enemyBullet.setAll('outOfBoundsKill', true);
 		this.enemyBullet.setAll('checkWorldBounds', true);
 
+
+		// Log background
+		
+		var graphic = this.game.add.graphics(0,0);
+
+		
+		graphic.beginFill(0xFFFFFF, 1);
+		graphic.lineStyle(2, 0x000000, 1)
+		graphic.drawRect(this.game.camera.width - 300, this.game.camera.height - 150, 300, 150)
+		graphic.endFill()
+		graphic.fixedToCamera = true
+		graphic.alpha = 0.5
+		
 		// Tableau associatif qui contiendra les enemis
 		// La clé de chaque valeur est l'ID du joueur
 		this.enemies = {}
+		
+		this.loglen = 0
 		
 		// On initialise l'état du jeu (à null)
 		this.gs = this.previous_gs = this.client.gameState;
@@ -97,13 +113,14 @@ multiplayer.prototype = {
 		this.previous_gs = _.clone(this.gs)
 		
 		// Récupère l'état du jeu courrant 
-		this.gs = this.client.gameState;
+		this.gs = this.client.gameState;	 
 
 		// Calcul de la différence entre le dernier état de jeu et l'état courant
 		this.diff = this.computeDiff(this.previous_gs, this.gs);
 
+
 		// On affiche chaque nouveau tir
-		for(i in this.diff.shots)
+		for(var i in this.diff.shots)
 			this.fireEnemyBullet(this.diff.shots[i])
 
 		// On ajoute chaque nouveau joueur
@@ -186,8 +203,28 @@ multiplayer.prototype = {
 		
 		this.game.physics.arcade.collide(this.bullets, this.enemyGroup, this.collisionHandlerBulletLayer, null, this);
 		
+		
+		if(this.client.log.length > this.loglen)
+		{
+			
+			var log_txt_style = { font: '10pt Comic Sans Ms', fill: 'black', align: 'left', wordWrap: true, wordWrapWidth: 260 };
+		    var log_txt = "";
+		    
+		    var toWrite = _.last(this.client.log, 5)
+		    
+			for(i in toWrite)
+				log_txt += toWrite[i] + "\n"
+			if(this.logBox)
+				this.game.world.remove(this.logBox)
+				
+		    this.logBox = this.game.add.text(this.game.camera.width-280, this.game.camera.height-140, log_txt, log_txt_style);
+		    this.logBox.fixedToCamera = true
+		    
+		    this.loglen = this.client.log.length
+		}
 	},
 	fireBullet: function() {
+		//console.log("{x :"+this.soldier.x+", y:"+this.soldier.y+"}")
 		bullet = this.bullets.getFirstExists(false);
 		if (this.game.time.now > this.bulletTime) 
 		{
@@ -200,7 +237,7 @@ multiplayer.prototype = {
 				
 
 				bullet.reset(position.x, position.y);
-				bullet.rotation = this.game.physics.arcade.moveToPointer(bullet, 800, this.game.input.activePointer)
+				bullet.rotation = this.game.physics.arcade.moveToPointer(bullet, this.settings.bullet_speed, this.game.input.activePointer)
 				this.bulletTime = this.game.time.now + 1000/this.soldierFireFrequency;
 				
 				// Envoie le tir au serveur
@@ -221,14 +258,21 @@ multiplayer.prototype = {
 				}
 			}
 		*/
-		
-		b = this.enemyBullet.create(bullet.data.position.x, bullet.data.position.y, 'gunProjectile', 0);
+
+
+		var x = bullet.data.position.x
+		var y = bullet.data.position.y
+
+		var b = this.enemyBullet.create(x, y, 'gunProjectile', 0);
 		
 		this.game.physics.arcade.enableBody(b);
         b.enableBody = true;
 		b.rotation = bullet.data.rotation
-		b.body.velocity.x = 800*Math.cos(b.rotation)
-		b.body.velocity.y = 800*Math.sin(b.rotation)
+		
+
+		
+		b.body.velocity.x = this.settings.bullet_speed*Math.cos(b.rotation)
+		b.body.velocity.y = this.settings.bullet_speed*Math.sin(b.rotation)
 		b.playerId = bullet.playerId
 	},
 	spawnEnemy: function(id, enemy){
@@ -255,7 +299,6 @@ multiplayer.prototype = {
 	},
 	destroyEnemy: function(id, enemy){
 		this.enemies[id].kill();
-		console.log("Kill: ", id , enemy);
 	},
 	enemyMovement: function(id, position){
 		this.enemies[id].x = position.x;
@@ -263,12 +306,12 @@ multiplayer.prototype = {
 		this.enemies[id].rotation = position.rotation;
 	},
 	getSpawn: function(){
-		return this.settings.player_spawns[0];
+		return this.settings.player_spawns[Math.floor(Math.random()*this.settings.player_spawns.length)];
 	},
 	killed: function(soldier, bullet){
-		console.log(bullet.playerId)
+		this.client.die(bullet.playerId)
 		bullet.kill();
-		spawn = this.getSpawn()
+		var spawn = this.getSpawn()
 		soldier.x = spawn.x
 		soldier.y = spawn.y
 	},

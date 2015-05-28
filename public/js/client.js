@@ -3,10 +3,14 @@ var Client = function(io){
 	this.socket = io.connect();
 	this.socket.Client = this;
 	this.gameState = null
+	this.log = ["Welcome to DARD Multiplayer Mode"]
 
 	self = this
 	this.socket.on('game-state', function(data){
 		self.gameState = data;
+	});
+	this.socket.on('log', function(data){
+		self.log.push(data)
 	});
 };
 
@@ -27,5 +31,5 @@ Client.prototype.fire = function(data){
 }
 
 Client.prototype.die = function(id){
-	this.socket.emit('player-die', data);
+	this.socket.emit('player-die', id);
 }
