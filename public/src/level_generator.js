@@ -30,8 +30,14 @@ var Level = function(n, user_settings){
 
 	level.prototype = {
 		preload: function(){
-			this.game.load.spritesheet('marine', 'assets/sprites/Soldier_Walk_Fire.png', 47, 23);
-			this.game.load.spritesheet('alien', 'assets/sprites/Alien_Walk2.png', 70, 58);
+			this.game.load.spritesheet('marine0', 'assets/sprites/soldier_bleu.png', 47, 23);
+			this.game.load.spritesheet('marine1', 'assets/sprites/soldier_rouge.png', 47, 23);
+			this.game.load.spritesheet('marine2', 'assets/sprites/soldier_vert.png', 47, 23);
+			this.game.load.spritesheet('marine3', 'assets/sprites/soldier_violet.png', 47, 23);
+			this.game.load.spritesheet('alien0', 'assets/sprites/alien_blue.png', 70, 58);
+			this.game.load.spritesheet('alien1', 'assets/sprites/alien_rouge.png', 70, 58);
+			this.game.load.spritesheet('alien2', 'assets/sprites/alien_vert.png', 70, 58);
+			this.game.load.spritesheet('alien3', 'assets/sprites/alien_violet.png', 70, 58);
 			this.game.load.tilemap('map', this.settings.tilemap, null, Phaser.Tilemap.TILED_JSON);
 			this.game.load.image('ground_1x1', this.settings.tilemap_sprite);
 			this.game.load.image('gunProjectile', 'assets/sprites/gun_projectile.png');
@@ -57,7 +63,7 @@ var Level = function(n, user_settings){
 			this.layer.resizeWorld();
 			// Permet d'adapter la caméra à la map
 			
-			this.soldier = this.game.add.sprite(this.settings.player_spawn.x, this.settings.player_spawn.y, 'marine');
+			this.soldier = this.game.add.sprite(this.settings.player_spawn.x, this.settings.player_spawn.y, 'marine'+_.random(0, 3));
 			this.soldier.anchor.set(0.2, 0.5);
 			this.soldier.scale.setTo(2, 2);
 			this.game.physics.enable(this.soldier, Phaser.Physics.ARCADE);
@@ -248,7 +254,7 @@ var Level = function(n, user_settings){
 		// Gestion des collisions
 		
 		SpawnAlien: function(aliens, posX, posY) {
-			alien = aliens.create(posX, posY, 'alien', 0);
+			alien = aliens.create(posX, posY, 'alien'+_.random(0,3), 0);
 			alien.alive = true;
 			this.game.debug.body(alien);
 			return alien;

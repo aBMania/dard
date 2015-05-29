@@ -19,7 +19,10 @@ var multiplayer = function(game){
   
 multiplayer.prototype = {
 	preload: function(){
-		this.game.load.spritesheet('marine', 'assets/sprites/Soldier_Walk_Fire.png', 47, 23);
+		this.game.load.spritesheet('marine0', 'assets/sprites/soldier_bleu.png', 47, 23);
+		this.game.load.spritesheet('marine1', 'assets/sprites/soldier_rouge.png', 47, 23);
+		this.game.load.spritesheet('marine2', 'assets/sprites/soldier_vert.png', 47, 23);
+		this.game.load.spritesheet('marine3', 'assets/sprites/soldier_violet.png', 47, 23);
 		this.game.load.tilemap('map', this.settings.tilemap, null, Phaser.Tilemap.TILED_JSON);
 		this.game.load.image('ground_1x1', this.settings.tilemap_sprite);
 		this.game.load.image('gunProjectile', 'assets/sprites/gun_projectile.png');
@@ -45,7 +48,7 @@ multiplayer.prototype = {
 		// Récupère un spawn (peut etre choisi parmi plusieurs pour éviter les spawn-kill)
 		var spawn = this.getSpawn()
 
-		this.soldier = this.game.add.sprite(spawn.x, spawn.y, 'marine');
+		this.soldier = this.game.add.sprite(spawn.x, spawn.y, 'marine0');
 		this.soldier.anchor.set(0.2, 0.5);
 		this.soldier.scale.setTo(2, 2);
 		this.game.physics.enable(this.soldier, Phaser.Physics.ARCADE);
@@ -276,7 +279,7 @@ multiplayer.prototype = {
 		b.playerId = bullet.playerId
 	},
 	spawnEnemy: function(id, enemy){
-		this.enemies[id] = this.enemyGroup.create(0, 0, 'marine', 0);
+		this.enemies[id] = this.enemyGroup.create(0, 0, 'marine'+_.random(1, 3), 0);
 		
 		this.enemies[id].anchor.set(0.2, 0.5);
 		this.enemies[id].scale.setTo(2, 2);
